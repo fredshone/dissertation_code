@@ -1,4 +1,9 @@
-#General
+"""
+Module to run tests on Object Detection models.
+Saves detection and performance results to given directory.
+Tests all models in model zoo. This includes downloading model and weights. At last testing, some model weights could
+not be accessed - these models are skipped and no results given.
+"""
 import os
 from datetime import datetime
 from datetime import timedelta
@@ -47,6 +52,11 @@ model_zoo = {'ssd_mobilenet_v1_coco': 'ssd_mobilenet_v1_coco_2018_01_28',
 
 
 def test(test_name):
+    """
+    Main function for running tests on model zoo.
+    :param test_name: String, relative directory path.
+    :return: Nothing returned, results saved to test results directory.
+    """
     ##################################################
     # Set up directory
     test_path = os.path.join(args.dir, test_name)

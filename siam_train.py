@@ -1,3 +1,5 @@
+"""Example Association Model experiment"""
+
 from keras import Model
 from keras import layers
 from keras import optimizers
@@ -9,7 +11,11 @@ import argparse
 
 
 def build_model(input_shape=(197, 197, 3)):
-
+    """
+    Builds model for training.
+    :param input_shape: Tuple of input image size (height, width, channels) (default (197,197,3)).
+    :return: Returns keras model
+    """
     print('Loading base CNN model...')
 
     cnn_base = ResNet50(weights='imagenet',
@@ -43,7 +49,18 @@ def build_model(input_shape=(197, 197, 3)):
 
 
 def train(batch_size=256, input_shape=(197, 197, 3), epochs=100, steps_epoch=10, val_steps=5, verbose=False, debug=False, load_weights=None):
-
+    """
+    Function to train given model and save training checkpoints.
+    :param batch_size: Integer, batch size (default 256)
+    :param input_shape: Tuple of input image size (height, width, channels) (default (197,197,3)).
+    :param epochs: Integer, maximum epochs (default 100)
+    :param steps_epoch: Integer, steps per epoch (default 10).
+    :param val_steps: Integer, batches for validation per epoch (default 5).
+    :param verbose: Boolean (default False).
+    :param debug: Boolean (default False).
+    :param load_weights: String, optional, path to existing weights if used (default None).
+    :return: None
+    """
     siam_model = build_model(input_shape)
     if load_weights:
         if verbose:

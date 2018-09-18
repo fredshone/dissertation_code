@@ -39,6 +39,14 @@ scale = 2  # Double image size
 
 
 def adjust(frame_count, object_count, line_in, scaler=2):
+    """
+    Re-formats ground truth data to MOT format.
+    :param rame_count: Integer, input frame number for new format.
+    :param object_count: Integer, input object id for new format.
+    :param line_in: Input ground truth, either tab or comma delineated.
+    :param scaler: Integer, option to re-scale ground truth detection location (default 2).
+    :return: Returns new ground truth line in MOT format.
+    """
     new_line = str(frame_count) + ',' + str(object_count)
     if ',' in line_in:
         line_split = line_in.split(',')

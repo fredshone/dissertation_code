@@ -26,6 +26,11 @@ from matplotlib import pyplot as plt
 
 
 def get_ids(instances):
+    """
+    Returns list of unique ids from given instances
+    :param instances: list of instance info
+    :return: list
+    """
     ids = [i[1] for i in instances]
     ids = [i for i in ids if i is not -1]
     return list(set(ids))
@@ -36,6 +41,13 @@ def get_rand_instance(instance):
 
 
 def get_crop(instance, image_dir, use):
+    """
+    Retrieves image of detection using given instance and directory info
+    :param instance: list - detection instance
+    :param image_dir: relative path to directory
+    :param use: path for image (ie test/train/validate)
+    :return: image
+    """
     # Get image
     img = get_image(instance, image_dir, use)
 
@@ -61,6 +73,13 @@ def get_crop(instance, image_dir, use):
 
 
 def get_image(instance, image_dir, use):
+    """
+    Retrieves image using given instance and directory info
+    :param instance: list - detection instance
+    :param image_dir: relative path to directory
+    :param use: path for image (ie test/train/validate)
+    :return: image
+    """
     image_num = instance[0]  # Extract image number from gt instance
     if not use == 'test':
         image_num = str(image_num).zfill(6)
@@ -72,6 +91,13 @@ def get_image(instance, image_dir, use):
 
 
 def rand_resize(image, lower=0.5, upper=1.5):
+    """
+    Randomly resizes an image
+    :param image: input image
+    :param lower: lower bound float. default = 0.5
+    :param upper: upper bound float, default = 1.5
+    :return: resized image
+    """
     w, h, d = image.shape
     f = random.uniform(lower, upper)
     return cv2.resize(image, (int(f*h), int(f*w)))
@@ -368,6 +394,13 @@ def rand_brightness(images, verbose=False, test=False):
 
 
 def random_augmentation(images, p, verbose=False):
+    """
+    Randomly applies available image transformations with probability p
+    :param images: input image
+    :param p: probability that any given transformation is used
+    :param verbose: true/false
+    :return: transformed image
+    """
     if len(images) > 1:
         c = np.random.choice(a=[1, 0], size=8, p=[p, 1-p])
     else:
@@ -434,6 +467,15 @@ def random_augmentation(images, p, verbose=False):
 
 
 def get_mismatch(instances, image_dir, use, verbose=False, image_verbose=False):
+    """
+    Randomly produces mismatched ped image pair from given instances and image directory
+    :param instances: list of ped instances
+    :param image_dir: relative location path
+    :param use: path ie test/train/validate
+    :param verbose: true/false
+    :param image_verbose: true/false used for debug
+    :return: list of two images
+    """
     # Get a random id from available ids in instance list
     ids = get_ids(instances)
     ped1_id, ped2_id = random.sample(ids, 2)
@@ -463,13 +505,21 @@ def get_mismatch(instances, image_dir, use, verbose=False, image_verbose=False):
             plt.show()
 
     else:
-        roi1, roi2 = get_match(instances, image_dir, verbose, image_verbose)
+        roi1, roi2 = get_mismatch(instances, image_dir, verbose, image_verbose)  # TODO - check mismatch always available
 
     return [roi1, roi2]
 
 
 def get_match(instances, image_dir, use, verbose=False, image_verbose=False):
-
+    """
+    Randomly produces matching ped image pair from given instances and image directory
+    :param instances: list of ped instances
+    :param image_dir: relative location path
+    :param use: path ie test/train/validate
+    :param verbose: true/false
+    :param image_verbose: true/false used for debug
+    :return: list of two images
+    """
     unique = False
     while not unique:
         # Get a random id from available ids in instance list
@@ -507,11 +557,20 @@ def get_match(instances, image_dir, use, verbose=False, image_verbose=False):
 
 
 def filter_instances(_line):
-
+    """
+    Filter instances for minimum image size and ratios
+    :param _line: single instance list
+    :return: boolean
+    """
     return (_line[4] * _line[5] > 10000) and (_line[4] > 50) and (_line[5] > 50) and ((_line[5] / _line[4]) > 0.1)
 
 
 def filter_gt(gt_in):
+    """
+    Filter instances for minimum image size and ratios
+    :param _line: single instance list
+    :return: boolean
+    """
     size = 10000
     dim = 40
     ratio = 0.2
@@ -523,7 +582,12 @@ def filter_gt(gt_in):
 
 
 def make_resize_square(img, size):
-
+    """
+    Resizes input image and adds black border to create output image of given size
+    :param img: input image
+    :param size: required output dims
+    :return: output image
+    """
     in_size = img.shape[:2]
     ratio = float(size[0]) / max(in_size)
     out_size = tuple([int(x * ratio) for x in in_size])
@@ -539,7 +603,13 @@ def make_resize_square(img, size):
 
 
 def get_weights(target_directory, verbose=False):
-
+    """
+    Calculate weights for sampling ped images
+    :param target_directory: path ie test/train/validate
+    :param verbose: true/false
+    :return: two dictionaries of weights for matches and mismatches, where dictionary keys are video data sources.
+    Returns None for test directory
+    """
     if target_directory == 'test':
         return None, None
 
@@ -599,7 +669,12 @@ def get_weights(target_directory, verbose=False):
 
 
 def get_instances(use, weights):
-
+    """
+    Samples instances for given use (test/train/validate) with given weights.
+    :param use: string ie test/train/validate
+    :param weights: dictionary of weights from get_weights method
+    :return: list of instances
+    """
     # Find directories
     dir_location = os.path.join('MOT', use)
     dir_names = os.listdir(dir_location)
@@ -657,6 +732,21 @@ def generator(use='train',
               batch_size=256,
               image_verbose=False,
               verbose=False):
+    """
+    Generates batches of image pairs.
+    :param use: string input ie test/train/validate (default 'train').
+    :param image_size: tuple of image array size (height, width, channels) (default (197,197,3)).
+    :param aug_mismatches: Boolean, option to apply (appropriate) pairwise augmentation to mismatches (default True).
+    :param border: Boolean, option to keep image size ratios and add black border to achieve required output size. If
+    False, image is re-sized without border and therefore typically distorted. Experimentation typically preferred no
+    border, therefore (default False).
+    :param mp: float between 0. and 1., option to change probability of matches in batch (default 0.5).
+    :param ap: float between 0. and 1., option to change probability of augmentations for each pair (default 0.2).
+    :param batch_size: integer, option to change generated batch size (default 256).
+    :param image_verbose: boolean, option to show images.
+    :param verbose: boolean.
+    :return: Returns batch of image pairs and label.
+    """
 
     # calculate information weights
     match_weights, miss_weights = get_weights(use, verbose)

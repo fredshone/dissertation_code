@@ -1,3 +1,5 @@
+"""Tool for visualising detection ground truth data so that MOT tracking ground truth can be labelled."""
+
 import numpy as np
 import os
 import argparse

@@ -4,6 +4,9 @@ import tensorflow as tf
 
 
 class ObjectAssociationModel:
+    """
+    Class to seperate keras object association model
+    """
     def __init__(self, path):
         self.graph = tf.Graph()
         with self.graph.as_default():

@@ -1,3 +1,6 @@
+"""
+Implementation of full tracker methodology
+"""
 import argparse
 import os
 import urllib.request
@@ -47,6 +50,7 @@ default_association_model = 'complex_feature_matching'
 
 
 def get_args():
+    """Get method arguments"""
     default_playlist = "https://www.youtube.com/watch?v=f5V-cH-9udI&list=UUDDgDE-EMc-tSyp7xy4Pk9w"
     # default_start = datetime.strptime('2015-10-28 00:00:00', '%Y-%m-%d %H:%M:%S').date()
     default_start = '2015-10-28'
@@ -96,6 +100,11 @@ def get_args():
 
 
 def yield_directory():
+    """
+    Input image generator for frames stored in directory
+    :return: Yields Boolean, Integer, Image.
+    Where the boolean signifies image availabilitya and the integer corresponds to the image id.
+    """
     # Set up directory
     img_dir = os.path.join(args.dir, 'img1')
     img_names = os.listdir(img_dir)
@@ -114,7 +123,11 @@ def yield_directory():
 
 
 def get_youtube_paths(playlist_url):
-
+    """
+    Return dictionary of dates and video urls from given Youtube playlist
+    :param playlist_url: String, url for playlist
+    :return: Returns sorted list of video dates and dictionary of video urls
+    """
     final_url = []
     eq = playlist_url.rfind('=') + 1
     cPL = playlist_url[eq:]
@@ -150,6 +163,11 @@ def get_youtube_paths(playlist_url):
 
 
 def yield_playlist(date):
+    """
+    Input image generator for video frames accessed from Youtube.
+    :param date: Datetime object, date for video frames.
+    :return: Yields video frames.
+    """
     img_index = -1
     url = url_dict.get(date, False)
     if args.verbose:
@@ -175,6 +193,12 @@ def yield_playlist(date):
 
 
 def loop_through_frames(date, results_path):
+    """
+    Main function for looping through frames from generator.
+    :param date: Datetime object, date for tracking.
+    :param results_path: String, path to output results.
+    :return: Nothing. Results saved to results_path.
+    """
     print('\n\tDate: {}'.format(date))
     ##################################################
     # Prepare loop

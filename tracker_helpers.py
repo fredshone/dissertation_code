@@ -2,8 +2,14 @@ import numpy as np
 import math
 
 
-# calc num individuals
 def get_track_results(results, verbose=False):
+
+    """
+    Calculates number of individuals in tracker results and the average number of frames per individual
+    :param results: output from tracker (numpy array)
+    :param verbose: true/false
+    :return: tuple (number of unique detections, average number of frames per unique detection)
+    """
     IDs = []
     for line in results:
         IDs.append(int(line[1]))
@@ -28,8 +34,14 @@ def get_track_results(results, verbose=False):
     return num_uniques, average_unique_frame_counts
 
 
-# calculate realtime results
 def get_analysis(input_array, start_id, date):
+    """
+    Adds individual data to tracker results (such as length in frame, total distance travelled and so on.
+    :param input_array: numpy array - results from tracker
+    :param start_id: integer - starting number for first detection
+    :param date: date object - used to extract year, month and date for detections
+    :return: tuple - (numpy results array, last id + 1)
+    """
     realtime_results = np.full((len(input_array), 24), np.inf)  # Results array
 
     for index, result in enumerate(input_array):
@@ -50,11 +62,16 @@ def get_analysis(input_array, start_id, date):
         x_av = x
         y_av = y
         direction_av = 0
-        year = date.year
-        month = date.month
-        day = date.day
 
-        # print('\n\tindex:{} frame:{}'.format(index, frame))
+        if type(date) == 'datetime.datetime':
+            print('datetime detected')
+            year = date.year
+            month = date.month
+            day = date.day
+        else:
+            year = 0
+            month = 0
+            day = 0
 
         # look back 3 frames for historic detection
         look_back = 1
@@ -116,7 +133,7 @@ def get_analysis(input_array, start_id, date):
                                    x,
                                    y,
                                    dx,
-                                   dy,
+                                                                                                                                                                                                                                                                                                                                                                            dy,
                                    dx_acc,
                                    dy_acc,
                                    distance,
@@ -136,8 +153,12 @@ def get_analysis(input_array, start_id, date):
     return realtime_results, next_ID
 
 
-# Aggregate by ID
 def get_ID_aggregation(input_array):
+    """
+    Processes results into summaries for each unique id
+    :param input_array: numpy array of detection results from get_analysis function
+    :return: return numpy array of unique peds
+    """
     unique_results = np.zeros((0, input_array.shape[1]))  # Results array
     IDs = []
 
@@ -153,6 +174,12 @@ def get_ID_aggregation(input_array):
 
 
 def get_trajectory_dict(id_array, results_array):
+    """
+    Build dictionary of trajectories for each id, where a trajectory is a list of x and y coordinates (using image axis)
+    :param id_array: numpy array of unique ids from get_ID_aggregation
+    :param results_array: numpy array of full results from tracker
+    :return: dictionary of trajectories
+    """
     trajectory_dict = {}
     for unique in id_array:
         ID = int(unique[1])
@@ -170,6 +197,14 @@ def get_trajectory_dict(id_array, results_array):
 
 
 def dist_to_point(x1,y1, x2,y2):
+    """
+    Calculates distance between two points
+    :param x1: point 1 x coordinate
+    :param y1: point 1 y coordinate
+    :param x2: point 2 x coordinate
+    :param y2: point 2 y coordinate
+    :return: float distance
+    """
     dx = x2-x1
     dy = y2-y1
     dist = math.sqrt(dx*dx + dy*dy)
@@ -178,6 +213,16 @@ def dist_to_point(x1,y1, x2,y2):
 
 
 def dist_to_line(x1, y1, x2, y2, x3, y3):  # x3,y3 is the point
+    """
+    Calculates the minimum distance between a straight line and a point. Where the point is expressed by two points
+    :param x1: line end 1 x coordinate
+    :param y1: line end 1 y coordinate
+    :param x2: line end 2 x coordinate
+    :param y2: line end 2 y coordinate
+    :param x3: point x coordinate
+    :param y3: point y coordinate
+    :return: float distance
+    """
     px = x2 - x1
     py = y2 - y1
 
@@ -206,6 +251,18 @@ def dist_to_line(x1, y1, x2, y2, x3, y3):  # x3,y3 is the point
 
 
 def get_kernel_results(grid, max_kernel_size, unique_detections, trajectory_dict):
+    """
+    Calculates flow diagram inputs for given grid and kernel size.
+    All unique detection trajectories are aggregeted to flow information at each grid point if trajectory passes within
+    given max_kernel_size to grid point.
+    Outputs are lists of length corresponding to given grid points.
+    :param grid: list or array of grid points (x,y)
+    :param max_kernel_size: max pixel distance for aggregating trajectories to each grid point
+    :param unique_detections: numpy array of unique ped data
+    :param trajectory_dict: dictionary of trajectories for each unique ped
+    :return: tuple of results lists (trajectory count, accumulaed distance, accumulated x distance, accumulated y
+    distance
+    """
     g_trajectory = []
     g_distance = []
     g_dx = []
@@ -252,5 +309,28 @@ def get_kernel_results(grid, max_kernel_size, unique_detections, trajectory_dict
     #     g_dy = [float(i)/max(g_dy) for i in g_dy]
 
     return g_trajectory, g_distance, g_dx, g_dy
+
+
+def create_grid(image, step):
+    """
+    Create grid for image.
+    :param image: Image.
+    :param step: Integer, pixel size of grid.
+    :return: Returns list of x and y coordinates.
+    """
+    h, w = image.shape[:2]
+    h_steps = int(h / step)
+    h_buffer = int((h - ((h_steps - 1) * step)) / 2)
+    w_steps = int(w / step)
+    w_buffer = int((w - ((w_steps - 1) * step)) / 2)
+
+    grid = []
+
+    for row in range(h_steps):
+        for col in range(w_steps):
+            y = h_buffer + (row * step)
+            x = w_buffer + (col * step)
+            grid.append([x, y])
+    return grid
 
 

@@ -54,6 +54,7 @@ occlusion_dict = {0: True,
 
 
 def split_line(line_in):
+    """Splits line by comma or space delineation"""
 
     if ',' in line_in:
         line_split = line_in.split(',')
@@ -64,7 +65,7 @@ def split_line(line_in):
 
 
 def adjust(line_split):
-
+    """Re-formats input line to MOT format. Returns False if detection is of wrong type (based on above dictionaries)"""
     frame = int(line_split[0])
     object_id = int(line_split[1])
     type_str = str(line_split[2])

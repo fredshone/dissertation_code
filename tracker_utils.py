@@ -1,3 +1,4 @@
+"""General utility functions for tracking"""
 import os
 import six.moves.urllib as urllib
 import tarfile
@@ -15,6 +16,12 @@ def load_image_into_numpy_array(image):
 
 # Load Frozen model into memory
 def load_model(model_name, location='object_detection'):
+    """
+    Loads frozen model into memory. If model not found then will try to download model.
+    :param model_name: String, model name.
+    :param location: Sting, relative directory path to frozen models.
+    :return: Returns frozen model graph.
+    """
     # Path to frozen detection graph. This is the actual model that is used for the object detection.
     ckpt_path = os.path.join(location, model_name, 'frozen_inference_graph.pb')
 
@@ -37,6 +44,12 @@ def load_model(model_name, location='object_detection'):
 
 # Download Model
 def download_model(model_name, location='object_detection'):
+    """
+    Downloads model. Requires internet connection.
+    :param model_name: String, model name.
+    :param location: Sting, relative directory path to frozen models.
+    :return: Nothing. Mode downloaded to directory.
+    """
     model_file = model_name + '.tar.gz'
     download_base = 'http://download.tensorflow.org/models/object_detection'
     download_path = os.path.join(download_base, model_file)
@@ -56,8 +69,12 @@ def download_model(model_name, location='object_detection'):
                 tar_file.extract(file, os.path.join(os.getcwd(), location))
 
 
-# Produce trigger image thumb
 def trigger_image(img):
+    """
+    Reduces image size to 1% and processes to B&W.
+    :param img: Input.
+    :return: Image.
+    """
     # Reduce image size to 1%
     thumb = cv2.resize(img, None, fx=.1, fy=.1, interpolation=cv2.INTER_AREA)
     thumb = cv2.cvtColor(thumb, cv2.COLOR_BGR2GRAY)
@@ -65,8 +82,15 @@ def trigger_image(img):
     return thumb
 
 
-# Motion trigger
 def motion_trigger(sensitivity, thumb, background):
+    """
+    Boolean trigger for image motion. Calculates pixel difference between frame and previous frame then returns
+    True if difference is above given sensitivity value.
+    :param sensitivity: Integer. threshold for image difference trigger.
+    :param thumb: Image, current frame.
+    :param background: Image, previous frame.
+    :return: Boolean. True for trigger.
+    """
     if background is None:  # Initialise background for first pass
         background = thumb
 
@@ -82,10 +106,12 @@ def motion_trigger(sensitivity, thumb, background):
 
 # Object Detection
 def run_object_detection(session, image):
-
-    # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-    # image_np_expanded = np.expand_dims(image, axis=0)
-
+    """
+    Main function for running object detection on images.
+    :param session: Tensorflow Session.
+    :param image: Image.
+    :return: Returns dictionary of detection results.
+    """
     # Get handles to input and output tensors
     ops = tf.get_default_graph().get_operations()
     all_tensor_names = {output.name for op in ops for output in op.outputs}
